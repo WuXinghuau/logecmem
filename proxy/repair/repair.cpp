@@ -199,7 +199,7 @@ int init()
         rc = memcached_server_add(memc[0], IP, 11211+i);
     }
     //parity
-    for(int i=0; i<N-K-1;i++)
+    for(int i=0; i<N-K-1;i++)//jnmnzys
     {
         rc = memcached_server_add(memc[i+1], IP, 20000+i);
     }
@@ -474,7 +474,7 @@ void run_plr()
                 }
                 else
                 {
-                    err_arr[1] = offset - 1; //assump front & itself are failed;
+                    err_arr[1] = offset - 1; //assump front & itself are failed;   
                 }
 
                 cout << "Assume " << err_arr[0] << " and " << err_arr[1] << " fail\n";
@@ -527,10 +527,10 @@ void run_plr()
                 else
                     cerr << "FILE OPEN FAILED" << endl;
 
-                //XOR, only for two, simulator
+                //XOR, only for two, simulator  狗屎
                 unsigned char encode_gftbl_xor[32 * 2 * 1];
                 unsigned char encode_matrix_xor[3 * 2];
-
+                
                 gf_gen_rs_matrix(encode_matrix_xor, 3, 2);
                 ec_init_tables(2, 1, &(encode_matrix_xor[2 * 2]), encode_gftbl_xor);
 
@@ -624,7 +624,7 @@ int main(int argc, char *argv[])
     N = 14;
     K = 10;
     SERVER = 16;
-    CHUNK_SIZE = 4096;
+    CHUNK_SIZE = 4096;//4K Chunksize
 
     sscanf(argv[2], "%d", &N);
     sscanf(argv[3], "%d", &K);

@@ -46,7 +46,7 @@ vector<queue<string> > vbuf(SERVER);
 
 unsigned int StripID = 0;
 unsigned int encode_inc = 0;  //for random encoding
-unsigned int delta_inc = 0;   //for all parity delta
+unsigned int delta_inc = 0;   //for aall parity delta
 unsigned int version_inc = 0; //for all version data
 
 //stripe metadata
@@ -227,10 +227,10 @@ int init()
 
         if (rc == MEMCACHED_SUCCESS)
         {
-            vbuf[index].push(string(vload[i]));
+            vbuf[index].push(string(vload[i]));//vbuf存的是UserID
             cout << i << ".Put " << vload[i] << " (" << vload[i].length() << ") into " << index << " buffer" << endl;
 
-            vector<string> dd;
+            vector<string> dd;//cnm 每项是一个数组
             if (check_encode(dd) == 1)
             {
                 //encode
@@ -243,7 +243,7 @@ int init()
                 {
                     char p1[100] = {0};
                     sprintf(p1, "SID%u-P%d", StripID, j + 1);
-                    //todo, need consider the distribution of XOR parity
+                    //todo, need consider the distribution of XOR parity？？？？？
                     rc = memcached_set(memc[j], p1, strlen(p1), pp[j].data(), CHUNK_SIZE, 0, 0);
                 }
 
@@ -252,13 +252,13 @@ int init()
                 //###key->stripe ID###
                 for (int j = 0; j < dd.size(); j++)
                 {
-                    //key->stripeID, offset
+                    //key->stripeID, offset   每个KV是一个chunk  
                     object_index.insert(pair<string, pair<unsigned int, int> >(dd[j], pair<unsigned int, int>(StripID, j)));
                 }
 
                 //put into Stripe Index, only data, parity can be calculated
                 //###StripeID -> keys+flag###
-                vector<pair<string, int> > ddd;
+                vector<pair<string, int> > ddd;//谁tm让你这么起名的
                 for (int i = 0; i < dd.size(); i++)
                 {
                     ddd.push_back(pair<string, int>(dd[i], 0)); //valid, flag=0, for batch coding;
@@ -882,7 +882,7 @@ int main(int argc, char *argv[])
     //     printf("Command Wrong!\n\n");
     //     exit(-1);
     // }
-
+    
     sscanf(argv[2], "%s", path);
     sscanf(argv[3], "%d", &N);
     sscanf(argv[4], "%d", &K);
