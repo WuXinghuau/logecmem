@@ -73,6 +73,8 @@ int check_encode(vector<string> &dd)
 {
     int count = 0;
     int inc1 = encode_inc;
+
+    //server中找K个vbuf不空的，表示可以编码成一个条带
     for (int i = 0; i < SERVER; i++)
     {
         if (!vbuf[inc1 % SERVER].empty())
@@ -92,8 +94,8 @@ int check_encode(vector<string> &dd)
     //can encode
     if (count == K)
     {
-        int inc2 = encode_inc - 1;
-        for (int i = 0; count > 0 && i < SERVER; i++)
+        int inc2 = encode_inc - 1;//那就是等于inc1了
+        for (int i = 0; count > 0 && i < SERVER; i++)//i没用 count控制循环，谁tm教你这么写代码的
         {
             if (!vbuf[inc2 % SERVER].empty())
             {
@@ -223,6 +225,35 @@ int init()
         memset(value, vload[i][5] - '0' + 'a', CHUNK_SIZE * sizeof(char));
         //cout << value <<endl;
         unsigned int index = 0;
+        
+        /* in static inline memcached_return_t memcached_send_index(memcached_st *shell,
+                                                const char *group_key, size_t group_key_length,
+                                                const char *key, size_t key_length,
+                                                const char *value, size_t value_length,
+                                                const time_t expiration,
+                                                const uint32_t flags,
+                                                const uint64_t cas,
+                                                memcached_storage_action_t verb,
+                                                uint32_t *index)
+    
+        Memcached* ptr= memcached2Memcached(shell);
+        memcached_return_t rc;
+        if (memcached_failed(rc= initialize_query(ptr, true)))
+        {
+          return rc;
+        }
+        
+        if (memcached_failed(memcached_key_test(*ptr, (const char **)&key, &key_length, 1)))
+        {
+          return memcached_last_error(ptr);
+        }
+        
+        uint32_t server_key= memcached_generate_hash_with_redistribution(ptr, group_key, group_key_length);
+        memcached_instance_st* instance= memcached_instance_fetch(ptr, server_key);
+        
+        *index = server_key;
+        */
+        // finally indedx=server_key
         rc = memcached_set_index(memc[0], vload[i].data(), vload[i].length(), value, CHUNK_SIZE, 0, 0, (uint32_t *)&index);
 
         if (rc == MEMCACHED_SUCCESS)
@@ -230,11 +261,11 @@ int init()
             vbuf[index].push(string(vload[i]));//vbuf存的是UserID
             cout << i << ".Put " << vload[i] << " (" << vload[i].length() << ") into " << index << " buffer" << endl;
 
-            vector<string> dd;//cnm 每项是一个数组
+            vector<string> dd;//存放参加编码的K个object的key
             if (check_encode(dd) == 1)
             {
                 //encode
-                vector<string> pp(N - K);
+                vector<string> pp(N - K);//存放生成的parity
 
                 encode(dd, pp);
 
@@ -243,8 +274,8 @@ int init()
                 {
                     char p1[100] = {0};
                     sprintf(p1, "SID%u-P%d", StripID, j + 1);
-                    //todo, need consider the distribution of XOR parity？？？？？
-                    rc = memcached_set(memc[j], p1, strlen(p1), pp[j].data(), CHUNK_SIZE, 0, 0);
+                    //todo, need consider the distribution of XOR parity
+                    rc = memcached_set(memc[j], p1, strlen(p1), pp[j].data(), CHUNK_SIZE, 0, 0); //XOR是存在memc[0]中的，但是被hash到同一个server上
                 }
 
                 cout << "\tPARITY SET OK" << endl;
@@ -258,7 +289,7 @@ int init()
 
                 //put into Stripe Index, only data, parity can be calculated
                 //###StripeID -> keys+flag###
-                vector<pair<string, int> > ddd;//谁tm让你这么起名的
+                vector<pair<string, int> > ddd;//谁tm这么起名的
                 for (int i = 0; i < dd.size(); i++)
                 {
                     ddd.push_back(pair<string, int>(dd[i], 0)); //valid, flag=0, for batch coding;

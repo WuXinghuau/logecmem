@@ -199,7 +199,7 @@ int init()
         rc = memcached_server_add(memc[0], IP, 11211+i);
     }
     //parity
-    for(int i=0; i<N-K-1;i++)//jnmnzys
+    for(int i=0; i<N-K-1;i++)
     {
         rc = memcached_server_add(memc[i+1], IP, 20000+i);
     }
@@ -363,7 +363,9 @@ void run()
                 unsigned char error_matrix[N * K] = {0};
                 unsigned char invert_matrix[N * K] = {0};
                 unsigned char decode_matrix[N * K] = {0};
+                
 
+                //这个矩阵是没有问题的
                 for (int j = 0, r = 0; j < N; j++)
                 {
                     if (j == err_arr[0] || j == err_arr[1])
